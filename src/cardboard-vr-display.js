@@ -117,7 +117,7 @@ CardboardVRDisplay.prototype.updateBounds_ = function () {
   }
 };
 
-CardboardVRDisplay.prototype.beginPresent_ = function() {
+CardboardVRDisplay.prototype.beginPresent_ = function(wasPresenting) {
   var gl = this.layer_.source.getContext('webgl');
   if (!gl)
     gl = this.layer_.source.getContext('experimental-webgl');
@@ -158,7 +158,7 @@ CardboardVRDisplay.prototype.beginPresent_ = function() {
     }.bind(this));
   }
 
-  if (this.rotateInstructions_) {
+  if (this.rotateInstructions_ && !wasPresenting) {
     if (Util.isLandscapeMode() && Util.isMobile()) {
       // In landscape mode, temporarily show the "put into Cardboard"
       // interstitial. Otherwise, do the default thing.

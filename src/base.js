@@ -252,7 +252,7 @@ VRDisplay.prototype.requestPresent = function(layers) {
             });
           }
           self.waitingForPresent_ = false;
-          self.beginPresent_();
+          self.beginPresent_(wasPresenting);
           resolve();
         } else {
           if (screen.orientation && screen.orientation.unlock) {
@@ -293,14 +293,7 @@ VRDisplay.prototype.requestPresent = function(layers) {
           // *sigh* Just fake it.
           self.wakelock_.request();
           self.isPresenting = true;
-          var instructionsCache = self.rotateInstructions_;
-          if (wasPresenting) {
-            self.rotateInstructions_ = null
-          }
-          self.beginPresent_();
-          if (wasPresenting) {
-            self.rotateInstructions_ = instructionsCache
-          }
+          self.beginPresent_(wasPresenting);
           self.fireVRDisplayPresentChange_();
           resolve();
         }

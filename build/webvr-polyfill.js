@@ -338,7 +338,7 @@ VRDisplay.prototype.requestPresent = function(layers) {
             });
           }
           self.waitingForPresent_ = false;
-          self.beginPresent_();
+          self.beginPresent_(wasPresenting);
           resolve();
         } else {
           if (screen.orientation && screen.orientation.unlock) {
@@ -379,14 +379,7 @@ VRDisplay.prototype.requestPresent = function(layers) {
           // *sigh* Just fake it.
           self.wakelock_.request();
           self.isPresenting = true;
-          var instructionsCache = self.rotateInstructions_;
-          if (wasPresenting) {
-            self.rotateInstructions_ = null
-          }
-          self.beginPresent_();
-          if (wasPresenting) {
-            self.rotateInstructions_ = instructionsCache
-          }
+          self.beginPresent_(wasPresenting);
           self.fireVRDisplayPresentChange_();
           resolve();
         }
@@ -1601,7 +1594,7 @@ CardboardVRDisplay.prototype.updateBounds_ = function () {
   }
 };
 
-CardboardVRDisplay.prototype.beginPresent_ = function() {
+CardboardVRDisplay.prototype.beginPresent_ = function(wasPresenting) {
   var gl = this.layer_.source.getContext('webgl');
   if (!gl)
     gl = this.layer_.source.getContext('experimental-webgl');
@@ -1642,7 +1635,7 @@ CardboardVRDisplay.prototype.beginPresent_ = function() {
     }.bind(this));
   }
 
-  if (this.rotateInstructions_) {
+  if (this.rotateInstructions_ && !wasPresenting) {
     if (Util.isLandscapeMode() && Util.isMobile()) {
       // In landscape mode, temporarily show the "put into Cardboard"
       // interstitial. Otherwise, do the default thing.
