@@ -184,6 +184,7 @@ VRDisplay.prototype.wrapForFullscreen = function(element) {
     return element;
   }
   if (!this.fullscreenWrapper_) {
+    this.fullscreenHolder_ = document.createElement('div');
     this.fullscreenWrapper_ = document.createElement('div');
     var cssProperties = [
       'height: ' + Math.min(screen.height, screen.width) + 'px !important',
@@ -198,6 +199,7 @@ VRDisplay.prototype.wrapForFullscreen = function(element) {
     ];
     this.fullscreenWrapper_.setAttribute('style', cssProperties.join('; ') + ';');
     this.fullscreenWrapper_.classList.add('webvr-polyfill-fullscreen-wrapper');
+    document.body.appendChild(this.fullscreenWrapper_);
   }
 
   if (this.fullscreenElement_ == element) {
@@ -209,7 +211,7 @@ VRDisplay.prototype.wrapForFullscreen = function(element) {
 
   this.fullscreenElement_ = element;
   var parent = this.fullscreenElement_.parentElement;
-  parent.insertBefore(this.fullscreenWrapper_, this.fullscreenElement_);
+  parent.insertBefore(this.fullscreenHolder_, this.fullscreenElement_);
   parent.removeChild(this.fullscreenElement_);
   this.fullscreenWrapper_.insertBefore(this.fullscreenElement_, this.fullscreenWrapper_.firstChild);
   this.fullscreenElementCachedStyle_ = this.fullscreenElement_.getAttribute('style');
@@ -252,10 +254,10 @@ VRDisplay.prototype.removeFullscreenWrapper = function() {
   this.fullscreenElement_ = null;
   this.fullscreenElementCachedStyle_ = null;
 
-  var parent = this.fullscreenWrapper_.parentElement;
+  var parent = this.fullscreenHolder_.parentElement;
   this.fullscreenWrapper_.removeChild(element);
-  parent.insertBefore(element, this.fullscreenWrapper_);
-  parent.removeChild(this.fullscreenWrapper_);
+  parent.insertBefore(element, this.fullscreenHolder_);
+  parent.removeChild(this.fullscreenHolder_);
 
   return element;
 };
@@ -364,32 +366,36 @@ VRDisplay.prototype.requestPresent = function(layers) {
         reject(new Error('Unable to present.'));
       }
 
-      self.addFullscreenListeners_(fullscreenElement,
-          onFullscreenChange, onFullscreenError);
+      if (!!Util.getFullscreenElement()) {
+        onFullscreenChange()
+      } else {
+        self.addFullscreenListeners_(fullscreenElement,
+            onFullscreenChange, onFullscreenError);
 
-      if (Util.requestFullscreen(fullscreenElement)) {
-        self.wakelock_.request();
-        self.waitingForPresent_ = true;
-      } else if (Util.isIOS()) {
-        // *sigh* Just fake it.
-        self.wakelock_.request();
-        self.isPresenting = true;
-        var instructionsCache = self.rotateInstructions_;
-        if (wasPresenting) {
-          self.rotateInstructions_ = null
+        if (Util.requestFullscreen(fullscreenElement)) {
+          self.wakelock_.request();
+          self.waitingForPresent_ = true;
+        } else if (Util.isIOS()) {
+          // *sigh* Just fake it.
+          self.wakelock_.request();
+          self.isPresenting = true;
+          var instructionsCache = self.rotateInstructions_;
+          if (wasPresenting) {
+            self.rotateInstructions_ = null
+          }
+          self.beginPresent_();
+          if (wasPresenting) {
+            self.rotateInstructions_ = instructionsCache
+          }
+          self.fireVRDisplayPresentChange_();
+          resolve();
         }
-        self.beginPresent_();
-        if (wasPresenting) {
-          self.rotateInstructions_ = instructionsCache
+
+        if (!self.waitingForPresent_ && !Util.isIOS()) {
+          Util.exitFullscreen();
+          reject(new Error('Unable to present.'));
         }
-        self.fireVRDisplayPresentChange_();
-        resolve();
       }
-    }
-
-    if (!self.waitingForPresent_ && !Util.isIOS()) {
-      Util.exitFullscreen();
-      reject(new Error('Unable to present.'));
     }
   });
 };
