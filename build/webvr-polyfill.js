@@ -298,21 +298,19 @@ VRDisplay.prototype.requestPresent = function(layers) {
     if (wasPresenting) {
       // Already presenting, just changing configuration
       var layer = self.layer_;
-      if (layer.source !== incomingLayer.source) {
-        layer.source = incomingLayer.source;
-      }
-
-      for (var i = 0; i < 4; i++) {
-        if (layer.leftBounds[i] !== leftBounds[i]) {
-          layer.leftBounds[i] = leftBounds[i];
+      if (layer.source === incomingLayer.source) {
+        for (var i = 0; i < 4; i++) {
+          if (layer.leftBounds[i] !== leftBounds[i]) {
+            layer.leftBounds[i] = leftBounds[i];
+          }
+          if (layer.rightBounds[i] !== rightBounds[i]) {
+            layer.rightBounds[i] = rightBounds[i];
+          }
         }
-        if (layer.rightBounds[i] !== rightBounds[i]) {
-          layer.rightBounds[i] = rightBounds[i];
-        }
-      }
 
-      resolve();
-      return;
+        resolve();
+        return;
+      }
     }
 
     // Was not already presenting.
@@ -1608,6 +1606,9 @@ CardboardVRDisplay.prototype.beginPresent_ = function() {
       this.cardboardUI_ = new CardboardUI(gl);
     }
   } else {
+    if (this.distorter_) {
+      this.distorter_.destroy();
+    }
     // Create a new distorter for the target context
     this.distorter_ = new CardboardDistorter(gl);
     this.distorter_.updateDeviceInfo(this.deviceInfo_);

@@ -135,6 +135,9 @@ CardboardVRDisplay.prototype.beginPresent_ = function() {
       this.cardboardUI_ = new CardboardUI(gl);
     }
   } else {
+    if (this.distorter_) {
+      this.distorter_.destroy();
+    }
     // Create a new distorter for the target context
     this.distorter_ = new CardboardDistorter(gl);
     this.distorter_.updateDeviceInfo(this.deviceInfo_);
