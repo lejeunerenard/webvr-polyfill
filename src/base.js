@@ -288,7 +288,14 @@ VRDisplay.prototype.requestPresent = function(layers) {
         // *sigh* Just fake it.
         self.wakelock_.request();
         self.isPresenting = true;
+        var instructionsCache = self.rotateInstructions_;
+        if (wasPresenting) {
+          self.rotateInstructions_ = null
+        }
         self.beginPresent_();
+        if (wasPresenting) {
+          self.rotateInstructions_ = instructionsCache
+        }
         self.fireVRDisplayPresentChange_();
         resolve();
       }
